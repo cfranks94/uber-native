@@ -2,19 +2,78 @@ import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
-import { Link } from "expo-router";
+import { useSignUp } from "@clerk/clerk-expo";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import { View, Text, ScrollView, Image } from "react-native";
+import { ReactNativeModal } from "react-native-modal";
 
 const SignUp = () => {
+    const { isLoaded, signUp, setActive } = useSignUp();
     const [form, setForm] = useState({
         name: "",
         email: "",
         password: ""
-    })
+    });
+    const [verification, setVerification] = useState({
+        state: 'default',
+        error: '',
+        code: ''
+    });
 
-    const onSignUpPress = async() => {
+    const onSignUpPress = async () => {
+        if (!isLoaded) return
+    
+        // Start sign-up process using email and password provided
+        try {
+          await signUp.create({
+            emailAddress: form.email,
+            password: form.password,
+          })
+    
+          // Send user an email with verification code
+          await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
+    
+          setVerification({
+            ...verification,
+            state: 'pending'
+          })
+        } catch (err) {
+          console.error(JSON.stringify(err, null, 2))
+        }
+    }
+    
+    const onVerifyPress = async () => {
+        if (!isLoaded) return;
+    
+        try {
+          const signUpAttempt = await signUp.attemptEmailAddressVerification({
+            code: verification.code,
+          })
+    
+          // If verification was completed
+          if (signUpAttempt.status === 'complete') {
+            // TODO: Create a new user in the database!
 
+            await setActive({ session: signUpAttempt.createdSessionId })
+            setVerification({
+                ...verification,
+                state: 'success'
+            })
+          } else {
+            setVerification({
+                ...verification,
+                state: 'failed',
+                error: 'Verification failed'
+            })
+          }
+        } catch (err: any) {
+            setVerification({
+                ...verification,
+                state: 'failed',
+                error: err.errors[0].longMessage
+            })
+        }
     }
 
     return (
@@ -79,6 +138,27 @@ const SignUp = () => {
                         <Text className="text-primary-500">Log In</Text>
                     </Link>
                 </View>
+
+                <ReactNativeModal isVisible={verification.state === 'success'}>
+                    <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+                        <Image source={images.check} className="w-[110px] h-[110px] mx-auto my-5" />
+
+                        <Text className="text-3xl font-JakartaBold text-center">
+                            Verified
+                        </Text>
+                        <Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
+                            You have successfully verified your account
+                        </Text>
+
+                        <CustomButton 
+                            title="Brose Home"
+                            className="mt-5"
+                            onPress={() => {
+                                router.replace('/(root)/(tabs)/home')
+                            }}
+                        />
+                    </View>
+                </ReactNativeModal>
             </View>
         </ScrollView>
     )
