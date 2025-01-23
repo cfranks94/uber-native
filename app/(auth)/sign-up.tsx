@@ -5,7 +5,7 @@ import { icons, images } from "@/constants";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { View, Text, ScrollView, Image } from "react-native";
+import { View, Text, ScrollView, Image, Alert } from "react-native";
 import { ReactNativeModal } from "react-native-modal";
 
 const SignUp = () => {
@@ -38,8 +38,8 @@ const SignUp = () => {
             ...verification,
             state: 'pending'
           })
-        } catch (err) {
-          console.error(JSON.stringify(err, null, 2))
+        } catch (err: any) {
+          Alert.alert('Error', err.errors[0].longMessage)
         }
     }
     
@@ -47,7 +47,7 @@ const SignUp = () => {
         if (!isLoaded) return;
     
         try {
-          const signUpAttempt = await signUp.attemptEmailAddressVerification({
+          const signUpAttempt = await signUp.attemptEmailAddressVerification({  
             code: verification.code,
           })
     
@@ -139,6 +139,40 @@ const SignUp = () => {
                     </Link>
                 </View>
 
+                <ReactNativeModal isVisible={verification.state === 'pending'} onModalHide={() => setVerification({
+                    ...verification,
+                    state: 'success'
+                })}>
+                    <View className="bg-white px-7 py-9 rounded-2xl">
+                        <Text className="text-2xl font-JakartaExtraBold mb-2">
+                            Verification
+                        </Text>
+                        <Text className="font-Jakarta mb-5">
+                            We've sent a verification code to {form.email}
+                        </Text>
+                        <InputField 
+                            label="Code"
+                            icon={icons.lock}
+                            placeholder="12345"
+                            value={verification.code}
+                            keyboardType="numeric"
+                            onChangeText={(code) => setVerification({...verification, code})}
+                        />
+
+                        {verification.error && (
+                            <Text className="text-red-500 text-sm mt-1">
+                                {verification.error}
+                            </Text>
+                        )}
+
+                        <CustomButton 
+                            title="Verify Email"
+                            onPress={onVerifyPress}
+                            className="mt-5 bg-success-500"
+                        />
+                    </View>
+                </ReactNativeModal>
+
                 <ReactNativeModal isVisible={verification.state === 'success'}>
                     <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
                         <Image source={images.check} className="w-[110px] h-[110px] mx-auto my-5" />
@@ -151,7 +185,7 @@ const SignUp = () => {
                         </Text>
 
                         <CustomButton 
-                            title="Brose Home"
+                            title="Browse Home"
                             className="mt-5"
                             onPress={() => {
                                 router.replace('/(root)/(tabs)/home')
