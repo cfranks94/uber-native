@@ -54,7 +54,7 @@ const SignUp = () => {
     
           // If verification was completed
           if (signUpAttempt.status === 'complete') {
-            await fetchAPI('/api/user', {
+            await fetchAPI('/(api)/user', {
                 method: 'POST',
                 body: JSON.stringify({
                     name: form.name,

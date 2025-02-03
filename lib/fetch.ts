@@ -6,7 +6,7 @@ export const fetchAPI = async (url: string, options?: RequestInit) => {
         if (!response.ok) {
             new Error(`HTTP error! status: ${response.status}`);
         }
-        return await response.json();
+        return response;
     } catch (error) {
         console.error("Fetch error:", error);
         throw error;
@@ -24,7 +24,8 @@ export const useFetch = <T>(url: string, options?: RequestInit) => {
 
         try {
             const result = await fetchAPI(url, options);
-            setData(result.data);
+            const data = await result.json();
+            setData(data);
         } catch (err) {
             setError((err as Error).message);
         } finally {
