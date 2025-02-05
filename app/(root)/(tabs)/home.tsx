@@ -4,7 +4,7 @@ import RideCard from '@/components/RideCard';
 import Map from '@/components/Map';
 import { icons, images } from '@/constants';
 import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { FlatList, SafeAreaView, Text, View, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useLocationStore } from '@/store';
@@ -119,8 +119,10 @@ export default function Page() {
 
   }
 
-  const handleDestinationPress = () => {
+  const handleDestinationPress = (location: { latitude: number; longitude: number; address: string }) => {
+    setDestinationLocation(location)
 
+    router.push('/(root)/find-ride');
   }
 
   useEffect(() => {
